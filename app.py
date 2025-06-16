@@ -106,3 +106,40 @@ else:
 # Avslutning
 st.markdown("---")
 st.caption("Utökad version – fler profiler och funktioner kan läggas till!")
+import matplotlib.pyplot as plt
+
+st.header("3. Balkfigur (skalenlig)")
+
+# Figurinställningar
+fig, ax = plt.subplots(figsize=(10, 2))
+ax.set_xlim(-0.1, L + 0.1)
+ax.set_ylim(-0.5, 1)
+ax.axis('off')
+
+# Skala: 1 m = 1 enhet (pixlar hanteras av figsize)
+balkhöjd = 0.1
+
+# Rita balken
+ax.plot([0, L], [0, 0], color='black', linewidth=3)
+
+# Rita stöd (trianglar)
+ax.plot([0], [0], marker=(3, 0, 0), markersize=20, color='black')
+ax.plot([L], [0], marker=(3, 0, 180), markersize=20, color='black')
+
+# Rita linjelast (blå rektangel)
+if q > 0:
+    ax.fill_between([0, L], 0.15, 0.3, color='skyblue', alpha=0.6)
+    ax.text(L/2, 0.32, f"q = {q:.1f} kN/m", ha='center', fontsize=10)
+
+# Rita punktlast (pil)
+if F > 0:
+    ax.arrow(a, 0.6, 0, -0.3, head_width=0.05, head_length=0.1, fc='red', ec='red')
+    ax.text(a, 0.65, f"F = {F:.1f} kN", ha='center', fontsize=10, color='red')
+
+# Måttangivelser
+ax.text(0, -0.15, "0 m", ha='center', fontsize=9)
+ax.text(L, -0.15, f"{L:.2f} m", ha='center', fontsize=9)
+ax.text(a, -0.15, f"{a:.2f} m", ha='center', fontsize=9, color='red')
+
+# Visa i Streamlit
+st.pyplot(fig)
