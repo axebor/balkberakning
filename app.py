@@ -86,7 +86,7 @@ with col_out:
             x=[-max_diameter - 1, max_diameter + 1],
             y1=0, y2=z_niva, color='lightblue', alpha=0.5)
         ax.hlines(y=z_niva, xmin=-max_diameter - 1, xmax=max_diameter + 1,
-                  colors='blue', linestyles='--', linewidth=2, label='Vattenlinje')
+                  colors='blue', linestyles='--', linewidth=2)
 
         # Måttpil och etikett för Zv
         ax.annotate("", xy=(max_diameter + 0.5, 0), xytext=(max_diameter + 0.5, z_niva),
@@ -123,16 +123,16 @@ with col_out:
                 arrowprops=dict(arrowstyle="<->"))
     ax.text(D_s/2 + 0.6, h_b + h_s/2, r"$h_s$", va='center', fontsize=12)
 
-    # Rita punktstreckad centrumlinje för lasten
+    # Punktstreckad centrumlinje
     ax.vlines(x=0, ymin=0, ymax=h_b + h_s + 1, colors='gray', linestyles='dotted', linewidth=1)
 
-    # Rita horisontell pil för last F på nivå z_F
+    # Horisontell pil för punktlast F på nivå z_F
     if F != 0 and 0 <= z_F <= h_b + h_s:
-        arrow_length = max_diameter / 2
+        arrow_len = max_diameter / 2
         ax.annotate("",
-                    xy=(0, z_F), xytext=(-arrow_length, z_F),
+                    xy=(0, z_F), xytext=(-arrow_len, z_F),
                     arrowprops=dict(arrowstyle="->", color='red', lw=2))
-        ax.text(-arrow_length - 0.2, z_F, r"$F$", color='red', fontsize=14, va='center')
+        ax.text(-arrow_len - 0.2, z_F, r"$F$", color='red', fontsize=14, va='center')
 
     ax.set_xlim(-max_diameter - 1, max_diameter + 1.5)
     ax.set_ylim(-1, max(h_b + h_s, z_niva if z_niva else 0, z_F) + 1)
@@ -151,4 +151,38 @@ with col_res:
     vol_skaft = pi * (D_s / 2) ** 2 * h_s
 
     # Volymer under vatten och ovan vatten
-    if fundament_i_vatten and z_niva is not None and z_n
+    if fundament_i_vatten and z_niva is not None and z_niva > 0:
+        under_vatten_botten = max(0, min(z_niva, h_b)) * pi * (D_b / 2) ** 2
+        ovan_vatten_botten = vol_bottenplatta - under_vatten_botten
+
+        under_vatten_skaft = max(0, min(z_niva - h_b, h_s)) * pi * (D_s / 2) ** 2
+        ovan_vatten_skaft = vol_skaft - under_vatten_skaft
+    else:
+        under_vatten_botten = 0
+        ovan_vatten_botten = vol_bottenplatta
+        under_vatten_skaft = 0
+        ovan_vatten_skaft = vol_skaft
+
+    # Vikter (kN)
+    vikt_ovan = (ovan_vatten_botten + ovan_vatten_skaft) * 25
+    vikt_under = (under_vatten_botten + under_vatten_skaft) * 15
+    vikt_tot = vikt_ovan + vikt_under
+
+    # Underrubrik Volym
+    st.markdown("### Volym")
+
+    # Tabell med volymer (avrundat till 1 decimal)
+    df_volymer = pd.DataFrame({
+        "Över vatten (m³)": [round(ovan_vatten_botten, 1), round(ovan_vatten_skaft, 1)],
+        "Under vatten (m³)": [round(under_vatten_botten, 1), round(under_vatten_skaft, 1)]
+    }, index=["Bottenplatta", "Skaft"])
+    st.table(df_volymer)
+
+    # Underrubrik Egenvikt
+    st.markdown("### Egenvikt")
+
+    # Tabell med vikter (avrundat till 1 decimal)
+    df_vikter = pd.DataFrame({
+        "Vikt (kN)": [round(vikt_ovan, 1), round(vikt_under, 1), round(vikt_tot, 1)]
+    }, index=["Över vatten", "Under vatten", "Total egenvikt (Gk, fund)"])
+    st.table(df_vikter)
